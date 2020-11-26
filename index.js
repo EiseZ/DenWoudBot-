@@ -17,7 +17,7 @@ const stickeyMessages = [];
 
 client.commands = new Discord.Collection();
 
-client.login('NzczMTI1ODgyMzQ4MTc1Mzcx.X6Erlg.Z7LDvxZ8sbF4i6ReBD5X7B4pynY');
+client.login('API KEY, VOER HIER IN STIJN');
 
 client.once('ready', () => {
     console.log('DenWoud Bot is online!');
