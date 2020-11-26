@@ -405,4 +405,4 @@ var myVar = setInterval(myTimer, 20000);
             playercountChannel = server.channels.cache.get(playercountChannelId)
             playercountChannel.setName('Spelers online: 0');
      });
-}
+} 
