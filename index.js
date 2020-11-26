@@ -1,4 +1,5 @@
 const Discord = require('discord.js');
+const Gamedig = require('gamedig');
 const { send } = require('process');
 const client = new Discord.Client();
 
@@ -7,8 +8,12 @@ const noPermMsg = 'Je hebt geen toestemming om dit te doen. Maak een ticket aan 
 const adminChannelId = '773457906435096616';
 const welkomChannelId = '772596676853891083';
 const regelsChannelId = '772267624363982848';
+const playercountChannelId = '778972915672547348';
 const verifiedRoleId = '772267319023370260';
 
+const pfPic = 'https://cdn.discordapp.com/attachments/772502958063353876/777549213462298644/DENWOUD_LOGO_Nieuw_geen_vlag.png';
+
+const stickeyMessages = [];
 
 client.commands = new Discord.Collection();
 
@@ -16,7 +21,7 @@ client.login('NzczMTI1ODgyMzQ4MTc1Mzcx.X6Erlg.Z7LDvxZ8sbF4i6ReBD5X7B4pynY');
 
 client.once('ready', () => {
     console.log('DenWoud Bot is online!');
-    var server = client.guilds.cache.get('772266910372462592');
+    var server = client.guilds.cache.get('772266910372462592');
     server.channels.cache.get('772267624363982848').messages.fetch();
     client.user.setActivity('DenWoudRP', { type: 'PLAYING' });
 });
@@ -28,7 +33,7 @@ client.on('guildMemberAdd', member => {
     var regelsChannel = client.channels.cache.get(regelsChannelId);
 
     var embed = new Discord.MessageEmbed()
-    .setAuthor('DenWoud', 'https://media.discordapp.net/attachments/772277980654731284/772567148794085456/Denwoud_RP_DINGETJE.png')
+    .setAuthor('DenWoud', pfPic)
     .setColor('#005da4')
     .setTitle('Welkom')
     .addField(`Hallo ${member.displayName}!`, 'Welkom op de officiele discord server van DenWoud!')
@@ -37,13 +42,32 @@ client.on('guildMemberAdd', member => {
     welkomChannel.send(embed)
 });
 
-client.on('message', message => {
-    if(!message.content.startsWith(prefix) || message.author.bot) return;
+client.on('message', async message => {
+    if(message.author.bot) return;
+
+    var toDelete = [];
+    stickeyMessages.forEach(function(stickeyMessage, index) {
+        if(stickeyMessage.channel == message.channel){
+            var msgToDelete = stickeyMessage.channel.messages.cache.get(stickeyMessage.msg.id);
+            msgToDelete.delete();
+
+            stickeyMessage.channel.send(stickeyMessage.msg.content);
+
+            setTimeout(pushToStickeys, 100, stickeyMessage.channel);
+            toDelete.push(index);
+        }
+    });
+    toDelete.forEach(toDelete => {
+        stickeyMessages.splice(toDelete, 1);
+    });
+    toDelete = [];
+
+    if(!message.content.startsWith(prefix)) return;
 
     const args = message.content.slice(prefix.length).split(/ +/);
     const command = args.shift().toLowerCase();
     const channel = message.channel;
-    const sender = message.member;
+    const sender = message.member; 
 
     switch (command) {
         /*
@@ -56,7 +80,7 @@ client.on('message', message => {
         case 'comm':
         case 'comms':
             var embed = new Discord.MessageEmbed()
-            .setAuthor('DenWoud', 'https://media.discordapp.net/attachments/772277980654731284/772567148794085456/Denwoud_RP_DINGETJE.png')
+            .setAuthor('DenWoud', pfPic)
             .setColor('#005da4')
             .setTitle('Commands')
             .setDescription('Prefix: ' + prefix)
@@ -73,7 +97,7 @@ client.on('message', message => {
         case 'information':
         case 'informatie':
             var embed = new Discord.MessageEmbed()
-            .setAuthor('DenWoud', 'https://media.discordapp.net/attachments/772277980654731284/772567148794085456/Denwoud_RP_DINGETJE.png')
+            .setAuthor('DenWoud', pfPic)
             .setColor('#005da4')
             .setTitle('Server Info')
             .addField('DenWoud', 'DenWoud is leuke GTA 5 server .....blablabla...')
@@ -91,7 +115,7 @@ client.on('message', message => {
         case 'botinformatie':
         case 'binformatie':
             var embed = new Discord.MessageEmbed()
-            .setAuthor('DenWoud', 'https://media.discordapp.net/attachments/772277980654731284/772567148794085456/Denwoud_RP_DINGETJE.png')
+            .setAuthor('DenWoud', pfPic)
             .setColor('#005da4')
             .setTitle('Bot Info')
             .addField('Maker', 'EiscoMania')
@@ -130,7 +154,7 @@ client.on('message', message => {
         case 'modcomms':
         case 'mcomms': 
             var embed = new Discord.MessageEmbed()
-            .setAuthor('DenWoud', 'https://media.discordapp.net/attachments/772277980654731284/772567148794085456/Denwoud_RP_DINGETJE.png')
+            .setAuthor('DenWoud', pfPic)
             .setColor('#005da4')
             .setTitle('Mod commands')
             .addField('Ban', `Hiermee kan je iemand bannen. Doe: ${prefix}ban (@persoon) {reden}`)
@@ -252,7 +276,7 @@ client.on('message', message => {
             let regelsChannel = client.channels.cache.get(regelsChannelId);
 
             var embed = new Discord.MessageEmbed()
-            .setAuthor('DenWoud', 'https://media.discordapp.net/attachments/772277980654731284/772567148794085456/Denwoud_RP_DINGETJE.png')
+            .setAuthor('DenWoud', pfPic)
             .setColor('#005da4')
             .setTitle('Verify')
             .setDescription('Klik hieronder op het vinkje om je te verifiëren.');
@@ -283,17 +307,18 @@ client.on('message', message => {
                 return;
             };
 
-            let channelToSend = message.guild.channels.cache.get(args[0].replace('<#','').replace('>',''));
-            if(!channelToSend) {
+            if(!args[0]){
                 channel.send('Geef een kanaal op om het bericht naartoe te sturen.');
                 return;
             }
+
+            var channelToSend = message.guild.channels.cache.get(args[0].replace('<#','').replace('>',''));
 
             let commandSender = message.member;
 
             channel.send(`Stuur nu het bericht om te versturen naar ${channelToSend}.`);
 
-            const collector = new Discord.MessageCollector(message.channel, m => m.author.id === message.author.id, { time: 10000 });
+            const collector = new Discord.MessageCollector(message.channel, m => m.author.id === message.author.id, { time: 60000 });
             collector.on('collect', message => {
                 console.log('collect');
                 if (message.member == commandSender) {
@@ -304,17 +329,80 @@ client.on('message', message => {
                 }
             })
             break;
-        case 'testwelcome':
-            client.emit("guildMemberAdd", message.member);
+        case 'sendstickey':
+            if(!sender.hasPermission('ADMINISTRATOR')){
+                channel.send(noPermMsg);
+                return;
+            };
+            
+            if(!args[0]){
+                channel.send('Geef een kanaal op om het bericht naartoe te sturen.');
+                return;
+            }
+
+            var channelToSendStickey = message.guild.channels.cache.get(args[0].replace('<#','').replace('>',''));
+            
+            let commandSenderStickey = message.member;
+    
+            channel.send(`Stuur nu het bericht om te versturen naar ${channelToSendStickey}.`);
+    
+            const collectorStickey = new Discord.MessageCollector(message.channel, m => m.author.id === message.author.id, { time: 60000 });
+            collectorStickey.on('collect', messageToSend => {
+                if (messageToSend.member == commandSenderStickey) {
+                    channelToSendStickey.send(messageToSend);
+                    message.channel.send('Het bericht is verstuurd.');
+
+                    setTimeout(pushToStickeys, 100, channelToSendStickey);
+                    collectorStickey.stop();
+                    return;
+                }
+            });
             break;
     }
 });
 
+function pushToStickeys(channelToSendStickey) {
+    channelToSendStickey.messages.fetch({ limit: 20 }).then(messages => {
+        console.log(messages);
+        var sendMessage;
+        messages.forEach(message => {
+            if(message.author == client.user) {
+                sendMessage = message;
+            }
+        });
+        var newStickeyMsg = {channel:channelToSendStickey, msg:sendMessage};
+        stickeyMessages.push(newStickeyMsg);
+    });
+};
+
+
 client.on('messageReactionAdd', async (reaction, user) => {
     if(!reaction.emoji.name === "✅") return;
-    if(!reaction.message.channel.id == "772267624363982848");
+    if(!reaction.message.channel.id == "772267624363982848") return;
 
     reaction.message.guild.member(user).roles.add(verifiedRoleId);
-    console.log('Added role');
-    console.log(user);
-  });
+});
+
+var myVar = setInterval(myTimer, 20000);
+    function myTimer() {
+        Gamedig.query({
+            type: 'fivem',
+            host: '194.36.102.12' //IP
+        }).then((state) => {
+            console.log(state);
+        
+            var serverPlayers = state.players;
+            var serverPlayercount = serverPlayers.length;
+            
+            console.log('Spelers Online ' + serverPlayercount);
+            
+            var server = client.guilds.cache.get('772266910372462592');
+            playercountChannel = server.channels.cache.get(playercountChannelId)
+            playercountChannel.setName('Spelers online: ' + serverPlayercount);
+        }).catch((error) => {
+            console.log("Server is offline");
+            var server = client.guilds.cache.get('772266910372462592');
+            playercountChannel = server.channels.cache.get(playercountChannelId)
+            playercountChannel.setName('Spelers online: 0');
+     });
+}
